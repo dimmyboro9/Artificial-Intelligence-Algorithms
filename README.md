@@ -5,6 +5,7 @@ There is a repository containing my implementation of some of the algorithms of 
 - [Sudoku using CSP](#Sudoku-using-CSP)
 - [TSP using genetic algorithm](#TSP-using-genetic-algorithm)
 - [Planning with PDDL](#Planning-with-PDDL)
+- [Simple knowledge system in Prolog](#Simple-knowledge-system-in-Prolog)
 
 ## Sudoku using CSP
 Let's consider the well-known `SUDOKU puzzle`, where I need to fill in the numbers 1 to 9 into a 9x9 grid in a way that satisfies various conditions regarding the uniqueness of digits. I won't detail the rules here, assuming they are known. My task is to solve the puzzle using artificial intelligence techniques, but in a way that is `as fast as possible` and guaranteed - meaning the solving algorithm `always finishes` and `provides the correct solution`. An interesting question is to implement multiple techniques and compare their performance.
@@ -42,5 +43,12 @@ The next project addresses the task of `automated planning` using the **Planning
 I have a warehouse represented as a grid map, with various items stored at different locations in the warehouse. Additionally, I have a group of robots, with each robot assigned to transport one item. The task is to use the robots to transport the items to specified target locations. Typically, there are more items than robots, and the distribution of items in the warehouse is uniform. However, there are relatively few target locations for the items (typically, places where items are packaged).
 
 I will describe this task in the PDDL language and generate a plan that leads to the solution of the problem with the fewest number of steps (`optimal plan`).
+
+## Simple knowledge system in Prolog
+A simple knowledge system in **Prolog** for recognizing mistakes in receipts and invoices. 
+
+Every invoice and receipt must meet specific requirements and contain prescribed items to be accepted as an accounting or tax document. Design and implement a simple knowledge system for checking receipts using the `inference mechanism` of Prolog. The system's task is to provide consultations to unqualified users when assessing the correctness of data on a receipt. Consultations will be provided by the knowledge system through the Prolog.
+
+You can find a detailed description of the project in the project's folder.
 
 `Copyright (c) Dmytro Borovko 2023`

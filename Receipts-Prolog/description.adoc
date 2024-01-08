@@ -1,0 +1,153 @@
+== A simple knowledge system for checking receipts
+
+=== Assignment
+Every invoice and receipt must meet specific requirements and contain prescribed items to be accepted as an accounting or tax document. Design and implement a simple knowledge system for checking receipts using the inference mechanism of PROLOG. The system's task is to provide consultations to unqualified users when assessing the correctness of data on a receipt. Consultations will be provided by the knowledge system through the Prolog. You have access to a training dataset containing 'receipts' (correct and incorrect), explanations of mistakes, and a description of how to detect each mistake. The task is designed to closely resemble the practical use of a knowledge system.
+
+Assume that the user can recognize individual items on the receipt but is unable to assess the correctness or validity of the receipt. For this, they need guidance from an expert system. For example, the user can find and read the VAT number, perform calculations, identify typos, count digits, etc. 
+
+=== Training Dataset - Receipts
+The dataset includes images of receipts prepared specifically for this task. These are not accounting or tax documents issued by companies mentioned on the receipts; errors contained in them are generated solely for the purpose of the task and training.
+
+Receipts are labeled as uXXXX, where XXXX is the receipt number. Errors are present only in the receipts listed in the table below. Other receipts are error-free. 
+
+==== Expert Information: Detailed Description of Errors in Receipts (in Czech)
+
+[cols="1,1,5,5"]
+|===
+|účtenka|název chyby|vysvětlení experta|jak chybu detekovat
+
+|u0006
+|Neplatné IČO odběratele.
+|Účastníky účetního případu jsou fyzické nebo právnické osoby, které je třeba v účetním dokladu označit jednoznačně tak, aby nemohlo dojít k omylu či záměně. Pokud je uvedené IČO neplatné, nelze doklad akceptovat. +
+link:https://www.kurzy.cz/zakony/563-1991-zakon-o-ucetnictvi/cast-2/[§11 zákona č. 563/1991 Sb. (Zákon o účetnictví), odstavec 1, písmeno b)] +
+link:https://www.kurzy.cz/zakony/89-2012-obcansky-zakonik/paragraf-435/[§435 zákona č. 89/2012 Sb. (Nový občanský zákoník), odstavec 1]
+| Vyzvat uživatele, aby našel na účtence IČO odběratele. Pokud na účtence je IČO odběratele, provést kontrolu IČO, pokud tam není nedělat nic. +
+Kontrola IČO (jednoduchá): Vyzvat uživatele, aby dle níže uvedeného algoritmu pro ověření IČO spočítal, zda IČO odběratele vyhovuje požadavkům (dělitelnost 11, počet číslic). +
+Kontrola IČO (pokročilá, body navíc): implementovat výpočet
+
+|u0007
+|Chybná celková částka.
+|Není jasné, jaké zboží či služby dodavatel poskytl a proč je odběrateli účtována celková částka. +
+link:https://www.kurzy.cz/zakony/563-1991-zakon-o-ucetnictvi/cast-2/[§11 zákona č. 563/1991 Sb. (Zákon o účetnictví), odstavec 1, písmeno c)]
+|Vyzvat uživatele, aby spočítal celkový součet položek dokladu a porovnal jej s celkovým součtem uvedeným na dokladu.
+
+|u0009
+|Chybí rekapitulace DPH.
+|Zákon o DPH vyžaduje, aby byly na daňovém dokladu podrobně rozepsány základy pro výpočet DPH, sazby DPH a vyčíslení DPH. +
+Nicméně u zjednodušeného daňového dokladu se zadává pouze sazba daně a finanční částka s DPH. Velikost daně se do účetnictví musí vypočítat. Výpočet DPH se řídí koeficientem dle Zákona č. 235/2004 Sb., o dani z přidané hodnoty. Konkrétně se tomu věnuje §37, první odstavec. +
+V tomto případě však není jasná sazba DPH. Ve skutečnosti se zde mixuje vícero sazeb (krém na ruce 21%, jogurt 15% atd.), takže DPH je třeba jasně vyčíslit v rekapitulaci. +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/paragraf-29/[§29 zákona č. 235/2004 Sb. (Zákon o DPH), odstavec 1, písmena i), j), k), l)] +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/paragraf-30/[§30 zákona č. 235/2004 Sb. (Zákon o DPH), odstavec 1] +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/paragraf-30a/[§30a zákona č. 235/2004 Sb. (Zákon o DPH, Náležitosti zjednodušeného daňového dokladu)]
+|Zjistit od uživatele, zda se jedná o daňový doklad (na dokladu je DIČ). +
+Vyzvat uživatele, aby zkontroloval, zda je na dokladu rekapitulace DPH. Pokud není, ověřit, že je na účtence uvedena sazba DPH pro celkovou částku (zjednodušeno pro tuto úlohu).
+
+|u0010
+|Chyba v datu (30.2.2021).
+|Zákon o účetnictví vyžaduje, aby byl na dokladu uveden okamžik vyhotovení účetního dokladu (obvykle se uvádí datum skutečného vystavení dokladu účetní jednotkou). +
+link:https://www.kurzy.cz/zakony/563-1991-zakon-o-ucetnictvi/cast-2/[§11 zákona č. 563/1991 Sb. (Zákon o účetnictví), odstavec 1, písmena d) a e)]
+|Vyzvat uživatele, aby zkontroloval datum a potvrdil, zda datum existuje a není v budoucnosti v nebo hluboké minulosti (ano/ne). Pro účely této úlohy uvažujte, že platné datum je pouze v roce 2021.
+
+|u0011
+|Chybí údaje o dodavateli (IČO,DIČ).
+|Účastníky účetního případu jsou fyzické nebo právnické osoby, které je třeba v účetním dokladu označit jednoznačně tak, aby nemohlo dojít k omylu či záměně. Nic bližšího k této náležitosti ale Zákon o účetnictví nestanoví. Obvykle jsou účastníci účetního případu označováni jménem nebo názvem s uvedením adresy bydliště nebo sídla, popř. také identifikačního čísla osoby (IČO), bylo-li přiděleno. +
+V tomto případě však není určení dodavatele jednoznačné. Je uvedena pouze adresa provozovny, nikoliv celý název dodavatele a jeho sídlo, jak to vyžaduje Nový občanský zákoník. +
+link:https://www.kurzy.cz/zakony/563-1991-zakon-o-ucetnictvi/cast-2/[§11 zákona č. 563/1991 Sb. (Zákon o účetnictví), odstavec 1, písmeno b)] +
+link:https://www.kurzy.cz/zakony/89-2012-obcansky-zakonik/paragraf-435/[§435 zákona č. 89/2012 Sb. (Nový občanský zákoník), odstavec 1]
+|Vyzvat uživatele, aby zkontroloval uvedení IČO dodavatele. +
+Pokud se jedná o daňový doklad, vyzvat uživatele, aby zkontroloval uvedení DIČ dodavatele.
+
+|u0012
+|Chybné sazby DPH.
+|Dort není konzumován v prodejně, takže sazba DPH má být 15% (jedná se o potravinu). Krabice tvoří pouze obal a má přijmout sazbu DPH za zboží v této krabici, tedy 15% (je však účtována v sazbě 21%, nicméně s částkou 0 Kč). Odběratel nesmí údaje na účtence měnit, sazby DPH musí do svého účetnictví zanést dle dokladu. +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/paragraf-47/[§47 zákona č. 235/2004 Sb. (Zákon o DPH), odstavec 4] +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/priloha-2a/[Příloha č. 2a k zákonu č. 235/2004 Sb (Zákon o DPH)] +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/priloha-3/[Příloha č. 3 k zákonu č. 235/2004 Sb (Zákon o DPH)]
+|Pro účely této úlohy: Vyzvat uživatele, aby zkontroloval, zda jsou účtovány potraviny. +
+Pokud ano, vyzvat uživatele, aby zkontroloval, zda se jedná o sazbu DPH 10%. +
+Pokud ano, jsou položky v sazbě DPH 10% konzumovány v prostorách dodavatele? Pokud ne, jedná se o chybu.
+
+|u0013
+|Chybí údaje o zápisu dodavatele do živnostenského rejstříku.
+|Nový občanský zákoník vyžaduje, aby byla na účetním dokladu uvedena informace o zápisu dodavatele do obchodního nebo živnostenského rejstříku.
+link:https://www.kurzy.cz/zakony/89-2012-obcansky-zakonik/paragraf-435/[§435 zákona č. 89/2012 Sb. (Nový občanský zákoník), odstavec 1]
+|Vyzvat uživatele, aby zkontroloval, zda účtenka obsahuje údaje o zápisu dodavatele do obchodního nebo živnostenského rejstříku. 
+
+|u0014
+|Chybí údaje o zápisu dodavatele do živnostenského rejstříku.
+|Nový občanský zákoník vyžaduje, aby byla na účetním dokladu uvedena informace o zápisu dodavatele do obchodního nebo živnostenského rejstříku.
+link:https://www.kurzy.cz/zakony/89-2012-obcansky-zakonik/paragraf-435/[§435 zákona č. 89/2012 Sb. (Nový občanský zákoník), odstavec 1]
+|Vyzvat uživatele, aby zkontroloval, zda účtenka obsahuje údaje o zápisu dodavatele do obchodního nebo živnostenského rejstříku. 
+
+|u0015
+|Chybí údaje o zápisu dodavatele do obchodního rejstříku.
+|Nový občanský zákoník vyžaduje, aby byla na účetním dokladu uvedena informace o zápisu dodavatele do obchodního nebo živnostenského rejstříku.
+link:https://www.kurzy.cz/zakony/89-2012-obcansky-zakonik/paragraf-435/[§435 zákona č. 89/2012 Sb. (Nový občanský zákoník), odstavec 1]
+|Vyzvat uživatele, aby zkontroloval, zda účtenka obsahuje údaje o zápisu dodavatele do obchodního nebo živnostenského rejstříku. 
+
+|u0016
+|Chybí číslo dokladu; chybné IČO a DIČ odběratele.
+|Zákon o účetnictví vyžaduje označení účetního dokladu. Způsob označení účetního dokladu není v Zákoně o účetnictví ani v prováděcích účetních předpisech nijak specifikován. V praxi se tato náležitost řeší zejména očíslováním jednotlivých účetních dokladů, přičemž konkrétní způsob číslování, případně dalšího označování účetních dokladů, záleží obvykle na používaném účetním software. +
+Účastníky účetního případu jsou fyzické nebo právnické osoby, které je třeba v účetním dokladu označit jednoznačně tak, aby nemohlo dojít k omylu či záměně. Pokud je uvedené IČO neplatné, nelze doklad akceptovat. +
+V tomto případě je navíc dodavatel zcela zjevně plátcem DPH. Podle Zákona o DPH je dodavatel povinen uvést DIČ a podle Nového občanského zákoníku IČO. +
+Problém je, že na tomto dokladu je neplatné IČO i DIČ. +
+link:https://www.kurzy.cz/zakony/563-1991-zakon-o-ucetnictvi/cast-2/[§11 zákona č. 563/1991 Sb. (Zákon o účetnictví), odstavec 1, písmena a) a b)] +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/paragraf-29/[§29 zákona č. 235/2004 Sb. (Zákon o DPH), odstavec 1, písmeno b)]
+link:https://www.kurzy.cz/zakony/89-2012-obcansky-zakonik/paragraf-435/[§435 zákona č. 89/2012 Sb. (Nový občanský zákoník), odstavec 1]
+|Chyba 1: Zeptat se uživatele, zda účtenka obsahuje číslo dokladu. +
+Chyba 2: Zeptat se uživatele, zda kontrola IČO provedená uživatelem dle algoritmu níže proběhla v pořádku nebo implementovat algoritmus kontroly (pokročilé). +
+Chyba 3: Zeptat se uživatele, zda se jedná o daňový doklad. +
+Pokud ano,zjisti od uživatele, zda se jedná o zjednodušený daňový doklad (je tam DIČ odběratele?). +
+Pokud ano, provést kontrolu DIČ odběratele - provedeno uživatelem dle algoritmu níže / implementovat algoritmus kontroly (pokročilé).
+
+|u0019
+|Chybí údaje o zápisu dodavatele do obchodního rejstříku.
+|Nový občanský zákoník vyžaduje, aby byla na účetním dokladu uvedena informace o zápisu dodavatele do obchodního nebo živnostenského rejstříku.
+link:https://www.kurzy.cz/zakony/89-2012-obcansky-zakonik/paragraf-435/[§435 zákona č. 89/2012 Sb. (Nový občanský zákoník), odstavec 1]
+|Vyzvat uživatele, aby zkontroloval, zda účtenka obsahuje údaje o zápisu dodavatele do obchodního nebo živnostenského rejstříku. 
+
+|u0025
+|Chybí datum uskutečnění zdanitelného plnění.
+|Zákon o DPH vyžaduje, aby bylo na daňovém dokladu uvedeno datum uskutečnění zdanitelného plnění. +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/paragraf-29/[§29 zákona č. 235/2004 Sb. (Zákon o DPH), odstavec 1, písmeno h)]
+|Pro účely této úlohy postačí, aby uživatel zjistil, zda je na dokladu datum vystavení dokladu (budeme to považovat za datum realizace, tedy případného daňového plnění).
+
+|u0033
+|Jedná se o zjednodušený daňový doklad, ale celková částka je přes 10.000 Kč.
+|Zjednodušený daňový doklad nelze vystavit na částku vyšší než 10.000 Kč. +
+link:https://www.kurzy.cz/zakony/235-2004-zakon-o-dani-z-pridane-hodnoty-dph/paragraf-30/[§30 zákona č. 235/2004 Sb. (Zákon o DPH), odstavec 1]
+|Zjistit od uživatele, zda se jedná o zjednodušený daňový doklad. Pokud ano, zkontrolovat, zda celková částka není větší než 10.000 Kč.
+|===
+
+===== Expert Knowledge (in Czech)
+*Jak ověřit platnost identifikačního čísla (IČO) ?*
+
+ 1. První až sedmou číslici (zleva) vynásobíme čísly 8, 7, 6, 5, 4, 3, 2 a součiny sečteme.
+ 2. Spočítáme zbytek po dělení jedenácti: zbytek = soucet % 11
+ 3. Pro poslední osmou číslici c musí platit: +
+        - je-li zbytek 0 nebo 10, pak c = 1 +
+        - je-li zbytek 1, pak c = 0 +
+        - v ostatních případech je c = 11 - zbytek +
+
+*Jak ověřit platnost daňového identifikačního čísla (DIČ) ?*
+
+DIČ začíná kódem státu, který má 2 písmena (např. CZ). Následuje 8 číslic, jejichž platnost ověříme stejně jako IČO.
+
+*Jak vypadá zjednodušený daňový doklad ?*
+
+Daňový doklad lze vystavit (mimo vyjímky definované zákonem) jako zjednodušený daňový doklad, pokud celková částka za plnění na daňovém dokladu není vyšší než 10 000 Kč. +
+Zákon určuje, že na zjednodušeném daňovém dokladu nemusí být: +
+ a) označení osoby, pro kterou se plnění uskutečňuje, +
+ b) daňové identifikační číslo osoby, pro kterou se plnění uskutečňuje, +
+ c) jednotkovou cenu bez daně a slevu, není-li obsažena v jednotkové ceně, +
+ d) základ daně, +
+ e) výši daně. +
+*V této úloze se rozhodne uživatel podle toho, zda je na dokladu uveden název odběratele. Pokud uveden není, jedná se o zjednodušený daňový doklad.*
+
+*Jaký je rozdíl mezi účetním a daňovým dokladem ?*
+
+Každý daňový doklad je zároveň účetním dokladem. Daňový doklad vystavují pouze plátci DPH. Na daňovém dokladu je vyčíslena DPH.
+Nejsou-li podnikatelé plátci DPH, nesmí daňový doklad vystavit.
+Pokud se tak stane, mají povinnost daň vyčíslenou na dokladu finančnímu úřadu uhradit (§108 odst. 1 písm. i) Zákona o DPH).
+Pokud není dodavatel plátcem DPH, musí na účetním dokladu explicitně uvést, že není plátcem DPH. +
+*V této úloze se rozhodne uživatel podle toho, zda je na dokladu uvedeno DIČ. Pokud ano, jedná se o daňový doklad vydaný plátcem DPH.*
